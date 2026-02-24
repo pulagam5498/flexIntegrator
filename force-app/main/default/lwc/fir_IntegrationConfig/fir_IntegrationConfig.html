@@ -1,0 +1,567 @@
+<template>
+    <div class="slds-grid slds-wrap fi-shell">
+
+        <!-- ════════════════════════════════════════
+             LEFT PANEL — Configuration List
+        ════════════════════════════════════════ -->
+        <div class="slds-col slds-size_2-of-5 fi-panel fi-panel_left">
+            <lightning-card icon-name="custom:custom18" title="Flex Integrator Configurations">
+
+                <div slot="actions" class="slds-grid slds-grid_vertical-align-center slds-gutters_xx-small">
+                    <div class="slds-col">
+                        <lightning-input
+                            type="search"
+                            label="Search"
+                            variant="label-hidden"
+                            placeholder="Search…"
+                            value={searchKey}
+                            onchange={handleSearch}
+                            class="fi-search-input">
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-shrink">
+                        <lightning-button variant="brand" label="New Config" onclick={handleNew}></lightning-button>
+                    </div>
+                    <div class="slds-col slds-shrink">
+                        <lightning-button-icon
+                            icon-name="utility:refresh"
+                            variant="border-filled"
+                            alternative-text="Refresh list"
+                            title="Refresh"
+                            onclick={refresh}>
+                        </lightning-button-icon>
+                    </div>
+                </div>
+
+                <div class="slds-card__body">
+
+                    <!-- Loading -->
+                    <template if:true={isLoading}>
+                        <div class="slds-align_absolute-center slds-p-around_large">
+                            <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+                        </div>
+                    </template>
+
+                    <!-- Card List -->
+                    <template if:false={isLoading}>
+                        <p class="slds-text-body_small slds-text-color_weak slds-p-around_x-small">
+                            {configCount} configuration(s)
+                        </p>
+
+                        <div class="fi-list-scroll slds-scrollable_y" role="listbox" aria-label="Integration Configurations">
+
+                            <template if:false={hasConfigs}>
+                                <p class="slds-text-body_regular slds-text-color_weak slds-text-align_center slds-p-around_medium">
+                                    No configurations found. Adjust your search or create a new one.
+                                </p>
+                            </template>
+
+                            <template for:each={configList} for:item="cfg">
+                                <div key={cfg.Id}
+                                    class={cfg.cardClass}
+                                    data-id={cfg.Id}
+                                    onclick={handleRowClick}
+                                    role="option"
+                                    >
+
+                                    <div class="fi-card-body">
+
+                                        <!-- Top row: Method badge (top-right) and Is Active toggle (aligned to left) -->
+                                        <div class="slds-grid slds-grid_vertical-align-center fi-card-top">
+                                            <!-- Is Active toggle aligned to the left (like other text elements) -->
+                                            <div class="slds-col slds-shrink slds-grid slds-grid_vertical-align-center slds-grid_align-start">
+                                                
+                                                 <template lwc:if={cfg.Is_Active__c}>
+                                                   <!--<span class="fi-badge fi-badge_get">Active</span> -->
+                                                   <span class="btn-default btn-green">Active</span>
+                                                </template>
+                                                <template lwc:else>
+                                                     <span class="fi-badge fi-activation_inactive">Inactive</span>
+                                                </template>
+                                                
+                                                
+                                                <!--<lightning-input type="toggle" name="isActive" checked={cfg.Is_Active__c} disabled></lightning-input>-->
+                                            </div>
+                                            <!-- Method badge in top-right corner -->
+                                            <div class="slds-col slds-shrink slds-grid slds-grid_vertical-align-center slds-grid_align-end">
+                                                
+                                                <span class={cfg.methodBadgeClass}>{cfg.Http_Method__c}</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Developer Name with label -->
+                                        <div class="fi-card-name-row slds-truncate">
+                                            <span class="fi-card-label">Developer Name: </span>
+                                            <span class="fi-card-title">{cfg.DeveloperName}</span>
+                                            <template if:true={cfg.isDirty}>
+                                                <abbr class="fi-dirty-dot" title="Unsaved changes">&#9679;</abbr>
+                                            </template>
+                                        </div>
+
+                                        <!-- Named Credential (left) + Test/Copy/Delete icon buttons (right) — same line -->
+                                        <div class="slds-grid slds-grid_vertical-align-center fi-card-bottom-row">
+                                            <div class="slds-col slds-truncate fi-card-cred">
+                                                <span class="fi-card-label">Named Credential: </span>
+                                                <span class="fi-card-subtitle">{cfg.Named_Credential_API_Name__c}</span>
+                                            </div>
+                                            <div class="fi-card-icons slds-col slds-shrink">
+                                                <lightning-button-icon
+                                                    icon-name="utility:connected_apps"
+                                                    variant="border-filled"
+                                                    size="small"
+                                                    alternative-text="Test connection"
+                                                    title="Test"
+                                                    data-id={cfg.Id}
+                                                    onclick={handleTest}>
+                                                </lightning-button-icon>
+                                                <lightning-button-icon
+                                                    icon-name="utility:copy_to_clipboard"
+                                                    variant="border-filled"
+                                                    size="small"
+                                                    alternative-text="Duplicate"
+                                                    title="Duplicate"
+                                                    data-id={cfg.Id}
+                                                    onclick={handleDuplicate}>
+                                                </lightning-button-icon>
+                                                <lightning-button-icon
+                                                    icon-name="utility:delete"
+                                                    variant="border-filled"
+                                                    size="small"
+                                                    alternative-text="Delete"
+                                                    title="Delete"
+                                                    data-id={cfg.Id}
+                                                    data-name={cfg.DeveloperName}
+                                                    onclick={handleDelete}>
+                                                </lightning-button-icon>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                </div>
+            </lightning-card>
+        </div>
+
+        <!-- ════════════════════════════════════════
+             RIGHT PANEL — Edit / Create
+        ════════════════════════════════════════ -->
+        <div class="slds-col slds-size_3-of-5 fi-panel fi-panel_right">
+
+            <!-- Empty state -->
+            <template if:false={selectedConfig}>
+                <lightning-card title="Create or Edit Configuration" icon-name="utility:settings">
+                    <div class="slds-p-around_large slds-text-align_center">
+                        <div class="slds-m-bottom_medium">
+                            <lightning-icon icon-name="utility:settings" size="large"></lightning-icon>
+                        </div>
+                        <h2 class="slds-text-heading_medium slds-m-bottom_x-small">No Configuration Selected</h2>
+                        <p class="slds-text-body_regular slds-text-color_weak slds-m-bottom_medium">
+                            Select a row to edit, or click <strong>New Config</strong> to get started.
+                        </p>
+                        <lightning-button variant="brand" label="New Configuration" onclick={handleNew}></lightning-button>
+                    </div>
+                </lightning-card>
+            </template>
+
+            <!-- Edit / Create form -->
+            <template if:true={selectedConfig}>
+                <lightning-card title={cardTitle} icon-name={cardIcon}>
+
+                    <div slot="actions" class="slds-grid slds-grid_vertical-align-center slds-gutters_xx-small">
+                        <template if:true={autosaveVisible}>
+                            <div class="slds-col">
+                                <span class="fi-autosave-badge">
+                                    <lightning-icon icon-name="utility:check" size="xx-small"></lightning-icon>
+                                    &nbsp;Saved
+                                </span>
+                            </div>
+                        </template>
+                        <div class="slds-col slds-shrink">
+                            <lightning-button-icon
+                                icon-name="utility:copy_to_clipboard"
+                                variant="border-filled"
+                                alternative-text="Duplicate this configuration"
+                                title="Duplicate (D)"
+                                onclick={handleDuplicateActive}>
+                            </lightning-button-icon>
+                        </div>
+                        <div class="slds-col slds-shrink">
+                            <lightning-button-icon
+                                icon-name="utility:save"
+                                variant="brand"
+                                alternative-text="Save"
+                                title="Save"
+                                onclick={handleSave}
+                                disabled={isSaveDisabled}>
+                            </lightning-button-icon>
+                        </div>
+                        <div class="slds-col slds-shrink">
+                            <lightning-button-icon
+                                icon-name="utility:connected_apps"
+                                variant="border-filled"
+                                alternative-text="Test Connection"
+                                title="Test Connection"
+                                onclick={handleTestConnection}
+                                disabled={isTesting}>
+                            </lightning-button-icon>
+                        </div>
+                        <div class="slds-col slds-shrink">
+                            <lightning-button-icon
+                                icon-name="utility:close"
+                                variant="border-filled"
+                                alternative-text="Close"
+                                title="Close (Esc)"
+                                onclick={closeDrawer}>
+                            </lightning-button-icon>
+                        </div>
+                    </div>
+
+                    <div class="slds-card__body slds-card__body_inner">
+                        <template if:true={warningMessage}>
+                            <div class="slds-notify slds-notify_alert slds-alert_warning slds-m-bottom_small" role="alert">
+                                <lightning-icon icon-name="utility:warning" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                <h2>{warningMessage}</h2>
+                            </div>
+                        </template>
+
+                        <!-- SLDS Tabs -->
+                        <div class="slds-tabs_default">
+                            <ul class="slds-tabs_default__nav" role="tablist">
+                                <li class={tabNavClassGeneral} role="presentation">
+                                    <a class="slds-tabs_default__link" role="tab"
+                                        tabindex={tabIndexGeneral} aria-selected={isTabGeneral}
+                                        aria-controls="tab-general" id="tab-general-link"
+                                        data-tab="general" onclick={switchTab}>General</a>
+                                </li>
+                                <li class={tabNavClassAuth} role="presentation">
+                                    <a class="slds-tabs_default__link" role="tab"
+                                        tabindex={tabIndexAuth} aria-selected={isTabAuth}
+                                        aria-controls="tab-auth" id="tab-auth-link"
+                                        data-tab="auth" onclick={switchTab}>Authentication</a>
+                                </li>
+                                <li class={tabNavClassHeaders} role="presentation">
+                                    <a class="slds-tabs_default__link" role="tab"
+                                        tabindex={tabIndexHeaders} aria-selected={isTabHeaders}
+                                        aria-controls="tab-headers" id="tab-headers-link"
+                                        data-tab="headers" onclick={switchTab}>Custom Headers</a>
+                                </li>
+                                <li class={tabNavClassBody} role="presentation">
+                                    <a class="slds-tabs_default__link" role="tab"
+                                        tabindex={tabIndexBody} aria-selected={isTabBody}
+                                        aria-controls="tab-body" id="tab-body-link"
+                                        data-tab="body" onclick={switchTab}>Request Body</a>
+                                </li>
+                            </ul>
+
+                            <!-- ══ TAB: General ══ -->
+                            <div id="tab-general" class={tabContentClassGeneral} role="tabpanel" aria-labelledby="tab-general-link">
+
+                                <div class="slds-section slds-is-open slds-m-bottom_medium">
+                                    <div class="slds-section__content slds-p-top_x-small">
+                                        <div class="slds-grid slds-gutters_small slds-wrap">
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <lightning-input name="MasterLabel" label="Master Label" required
+                                                    value={selectedConfig.MasterLabel} maxlength="40"
+                                                    onblur={handleMasterLabelBlur} onchange={handleChange}>
+                                                </lightning-input>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <lightning-input name="DeveloperName" label="Developer Name" required maxlength="40"
+                                                    value={selectedConfig.DeveloperName} onchange={handleChange} disabled={disabledDevName}>
+                                                </lightning-input>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-section__content slds-p-top_x-small">
+                                        <div class="slds-grid slds-gutters_small slds-wrap">
+                                            <div class="slds-col slds-size_1-of-3">
+                                                <div class={flagClassLog} data-field="Is_Log_Required__c"
+                                                    onclick={handleFlagToggle} role="checkbox"
+                                                    aria-checked={selectedConfig.Is_Log_Required__c}
+                                                    tabindex="0" onkeydown={handleFlagKeyDown}>
+                                                    <div class={pillClassLog}></div>
+                                                    <span class="fi-flag-label">Log Required</span>
+                                                </div>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-3">
+                                                <div class={flagClassActive} data-field="Is_Active__c"
+                                                    onclick={handleFlagToggle} role="checkbox"
+                                                    aria-checked={selectedConfig.Is_Active__c}
+                                                    tabindex="0" onkeydown={handleFlagKeyDown}>
+                                                    <div class={pillClassActive}></div>
+                                                    <span class="fi-flag-label">Is Active</span>
+                                                </div>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-3">
+                                                <div class={flagClassAsync} data-field="Is_Async__c"
+                                                    onclick={handleFlagToggle} role="checkbox"
+                                                    aria-checked={selectedConfig.Is_Async__c}
+                                                    tabindex="0" onkeydown={handleFlagKeyDown}>
+                                                    <div class={pillClassAsync}></div>
+                                                    <span class="fi-flag-label">Is Async</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="slds-section slds-is-open slds-m-bottom_medium">
+                                    <h3 class="slds-section__title slds-theme_shade">
+                                        <span class="slds-truncate slds-p-horizontal_small">HTTP Settings</span>
+                                    </h3>
+                                    <div class="slds-section__content slds-p-top_x-small">
+                                        <div class="slds-grid slds-gutters_small slds-wrap">
+                                            <div class="slds-col slds-size_1-of-3">
+                                                <lightning-combobox name="Http_Method__c" label="HTTP Method" required
+                                                    value={selectedConfig.Http_Method__c} options={httpMethodOptions} onchange={handleChange}>
+                                                </lightning-combobox>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-3">
+                                                <lightning-combobox name="Request_Content_Type__c" label="Request Content Type" required
+                                                    value={selectedConfig.Request_Content_Type__c} options={requestCTOptions} onchange={handleChange}>
+                                                </lightning-combobox>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-3">
+                                                <lightning-combobox name="Named_Credential_API_Name__c" label="Named Credential" required
+                                                    placeholder="Select a Named Credential"
+                                                    value={selectedConfig.Named_Credential_API_Name__c} options={ncOptions} onchange={handleChange}>
+                                                </lightning-combobox>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <lightning-input name="Relative_Path__c" label="Relative Path" required maxlength="255"
+                                                    value={selectedConfig.Relative_Path__c} onchange={handleChange}>
+                                                </lightning-input>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-4">
+                                                <lightning-input name="Default_Timeout_ms__c" label="Default Timeout (ms)"
+                                                    type="number" min="1" max="120000" placeholder="e.g. 10000" maxlength="6"
+                                                    value={selectedConfig.Default_Timeout_ms__c}
+                                                    message-when-range-underflow="Minimum is 1 ms."
+                                                    message-when-range-overflow="Maximum is 120,000 ms."
+                                                    onchange={handleChange}>
+                                                </lightning-input>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-4">
+                                                <lightning-combobox name="Max_Retries__c" label="Max Retries"
+                                                    value={selectedConfig.Max_Retries__c} options={maxRetriesOptions} onchange={handleChange}>
+                                                </lightning-combobox>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <template if:true={testMessage}>
+                                    <div class={testMessageClass} role="status">{testMessage}</div>
+                                </template>
+                                <template if:true={isTesting}>
+                                    <div class="slds-m-top_small">
+                                        <lightning-spinner alternative-text="Testing…" size="small"></lightning-spinner>
+                                    </div>
+                                </template>
+
+                            </div><!-- /tab-general -->
+
+                            <!-- ══ TAB: Authentication ══ -->
+                            <div id="tab-auth" class={tabContentClassAuth} role="tabpanel" aria-labelledby="tab-auth-link">
+
+                                <div class="slds-section slds-is-open slds-m-bottom_medium">
+                                    <h3 class="slds-section__title slds-theme_shade">
+                                        <span class="slds-truncate slds-p-horizontal_small">JWT Authentication</span>
+                                    </h3>
+                                    <div class="slds-section__content slds-p-top_medium">
+
+                                        <!-- Segmented 3-option button group -->
+                                        <div class="fi-jwt-option-group" role="group" aria-label="JWT authentication mode">
+                                            <button class={jwtBtnClassNone} data-mode="none" type="button" onclick={handleJwtModeChange}>
+                                                No JWT
+                                            </button>
+                                            <button class={jwtBtnClassSame} data-mode="same" type="button" onclick={handleJwtModeChange}>
+                                                Same Endpoint
+                                            </button>
+                                            <button class={jwtBtnClassDiff} data-mode="diff" type="button" onclick={handleJwtModeChange}>
+                                                Different Endpoint
+                                            </button>
+                                        </div>
+
+                                        <!-- No JWT: informational hint -->
+                                        <template if:true={isJwtNone}>
+                                            <div class="fi-jwt-hint slds-m-top_medium">
+                                                <lightning-icon icon-name="utility:info" size="x-small" class="slds-m-right_xx-small"></lightning-icon>
+                                                <span class="slds-text-body_small slds-text-color_weak">
+                                                    No JWT authentication will be applied to this configuration.
+                                                </span>
+                                            </div>
+                                        </template>
+
+                                        <!-- Same Endpoint: Token Path + Token Body -->
+                                        <template if:true={isJwtSame}>
+                                            <div class="slds-grid slds-gutters_small slds-wrap slds-m-top_medium">
+                                                <div class="slds-col slds-size_1-of-1">
+                                                    <lightning-input
+                                                        name="Token_Path__c"
+                                                        label="Token Path"
+                                                        value={selectedConfig.Token_Path__c}
+                                                        maxlength="255"
+                                                        onchange={handleChange}>
+                                                    </lightning-input>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-1 slds-m-top_small">
+                                                    <lightning-textarea
+                                                        name="Token_Body__c"
+                                                        label="Token Body"
+                                                        value={selectedConfig.Token_Body__c}
+                                                        rows="6"
+                                                        maxlength="32760"
+                                                        onchange={handleChange}>                                            >
+                                                    </lightning-textarea>
+                                                </div>
+                                            </div>
+                                        </template>
+
+                                        <!-- Different Endpoint: Named Credential + Token Path + Token Body -->
+                                        <template if:true={isJwtDiff}>
+                                            <div class="slds-grid slds-gutters_small slds-wrap slds-m-top_medium">
+                                                <div class="slds-col slds-size_1-of-1">
+                                                    <lightning-combobox
+                                                        name="JWT_Named_Credential__c"
+                                                        label="Named Credential (JWT Endpoint)"
+                                                        placeholder="Select a Named Credential"
+                                                        value={selectedConfig.JWT_Named_Credential__c}
+                                                        options={ncOptions}
+                                                        required
+                                                        onchange={handleChange}>
+                                                    </lightning-combobox>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-1 slds-m-top_small">
+                                                    <lightning-input
+                                                        name="Token_Path__c"
+                                                        label="Token Path"
+                                                        maxlength="255"
+                                                        value={selectedConfig.Token_Path__c}
+                                                        onchange={handleChange}>
+                                                    </lightning-input>
+                                                </div> 
+                                                <div class="slds-col slds-size_1-of-1 slds-m-top_small">
+                                                    <lightning-textarea
+                                                        name="Token_Body__c"
+                                                        label="Token Body"
+                                                        value={selectedConfig.Token_Body__c}
+                                                        rows="6"
+                                                        maxlength="32760"
+                                                        onchange={handleChange}>
+                                                    </lightning-textarea>
+                                                </div>
+                                            </div>
+                                        </template>
+
+                                    </div>
+                                </div>
+
+                                <template if:true={testMessage}>
+                                    <div class={testMessageClass} role="status">{testMessage}</div>
+                                </template>
+                                <template if:true={isTesting}>
+                                    <div class="slds-m-top_small">
+                                        <lightning-spinner alternative-text="Testing…" size="small"></lightning-spinner>
+                                    </div>
+                                </template>
+
+                            </div><!-- /tab-auth -->
+
+                            <!-- ══ TAB: Custom Headers ══ -->
+                            <div id="tab-headers" class={tabContentClassHeaders} role="tabpanel" aria-labelledby="tab-headers-link">
+
+                                <table class="slds-table slds-table_cell-buffer slds-table_bordered fi-headers-table" role="grid" aria-label="Custom headers">
+                                    <thead>
+                                        <tr class="slds-line-height_reset">
+                                            <th scope="col"><div class="slds-truncate slds-text-title_caps slds-p-left_xx-large">Key</div></th>
+                                            <th scope="col"><div class="slds-truncate slds-text-title_caps slds-p-left_xx-large">Value</div></th>
+                                            <th class="fi-col-actions" scope="col"><div class="slds-assistive-text">Remove</div></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template for:each={editableTemplateRows} for:item="row">
+                                            <tr key={row.id}>
+                                                 <td  data-label="Key" >
+                                                    <div class="required-wrapper">
+                                                        <span class="required-mark">*</span>
+                                                        <lightning-input variant="label-hidden" value={row.key}
+                                                            data-id={row.id} data-field="key" required
+                                                            placeholder="Header Key" maxlength="50"
+                                                            onchange={handleTemplateChange} style="width:100% !important">
+                                                        </lightning-input>
+                                                    </div>
+                                                </td>
+                                                <td data-label="Value">
+                                                    <div class="required-wrapper">
+                                                        <span class="required-mark">*</span>
+                                                        <lightning-input variant="label-hidden" value={row.value} data-id={row.id} data-field="value" required
+                                                            placeholder="Header Value" maxlength="1000" onchange={handleTemplateChange} style="width:100% !important">
+                                                        </lightning-input>
+                                                    </div>
+                                                </td>
+                                                <td class="fi-col-actions">
+                                                    <lightning-button-icon icon-name="utility:delete"
+                                                        variant="border-filled" size="small"
+                                                        alternative-text="Remove header" title="Remove"
+                                                        data-id={row.id} onclick={removeTemplateRow}>
+                                                    </lightning-button-icon>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                        <template if:false={hasHeaderRows}>
+                                            <tr>
+                                                <td colspan="3">
+                                                    <p class="slds-text-body_small slds-text-color_weak slds-text-align_center slds-p-around_small">
+                                                        No custom headers defined. Click <strong>Add Header</strong> to add one.
+                                                    </p>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                                
+
+                                <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-m-top_small slds-border_top slds-p-top_small">
+                                    <div class="slds-col slds-shrink">
+                                        <lightning-button
+                                            label="Add Header"
+                                            variant="neutral"
+                                            icon-name="utility:add"
+                                            onclick={addTemplateRow}>
+                                        </lightning-button>
+                                    </div>
+                                </div>
+
+                            </div><!-- /tab-headers -->
+
+                            <!-- ══ TAB: Request Body ══ -->
+                            <div id="tab-body" class={tabContentClassBody} role="tabpanel" aria-labelledby="tab-body-link">
+
+                                <lightning-textarea name="Request_Body_Template__c" label="Request Body Template"
+                                    value={selectedConfig.Request_Body_Template__c} rows="16" maxlength="32760"
+                                    placeholder="Enter request body template…" onchange={handleChange}>
+                                </lightning-textarea>
+                            </div><!-- /tab-body -->
+
+                             <div class="slds-grid slds-grid_align-end slds-gutters_xx-small slds-m-top_small slds-border_top slds-p-top_small">
+                                <div class="slds-col slds-shrink">
+                                    <lightning-button label="Test Connection" variant="neutral" disabled={isTesting} onclick={handleTestConnection}></lightning-button>
+                                </div>
+                                <div class="slds-col slds-shrink">
+                                    <lightning-button label="Save" variant="brand" disabled={isSaveDisabled} onclick={handleSave}></lightning-button>
+                                </div>
+                            </div>
+
+                        </div><!-- /slds-tabs_default -->
+                    </div><!-- /slds-card__body -->
+                </lightning-card>
+            </template>
+
+        </div><!-- /right panel -->
+    </div><!-- /fi-shell -->
+</template>

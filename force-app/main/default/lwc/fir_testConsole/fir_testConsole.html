@@ -1,0 +1,213 @@
+<template>
+  <div class="two-col slds-grid slds-wrap">
+    
+    <!-- Full-width card for API Console -->
+    <div class="slds-col slds-size_1-of-1 slds-p-around_small">
+      <lightning-card title="API Console" icon-name="utility:connected_apps">
+        <div class="slds-p-around_small main-content">
+
+          <!-- Panels side by side -->
+          <div class="slds-grid slds-wrap">
+
+            <!-- Request Panel -->
+            <div class="slds-col slds-size_1-of-2 slds-p-around_small slds-border_right">
+              <div class="panel request-panel">
+                <div class="panel-header">
+                  <h2 class="panel-title">Request
+                    <abbr class="slds-required" title="required">*</abbr>
+                  </h2>
+                </div>
+                <div class="panel-content">
+                  
+                  <!-- SLDS Tabs for Request Sections -->
+                  <div class="slds-tabs_default">
+                    <ul class="slds-tabs_default__nav" role="tablist">
+                      <li class="slds-tabs_default__item" role="presentation">
+                        <a class="slds-tabs_default__link" role="tab"
+                            tabindex="0" aria-selected="true"
+                            aria-controls="tab-request" id="tab-request-link"
+                            data-tab="request">Request</a>
+                      </li>
+                      <li class="slds-tabs_default__item" role="presentation">
+                        <a class="slds-tabs_default__link" role="tab"
+                            tabindex="-1" aria-selected="false"
+                            aria-controls="tab-headers" id="tab-headers-link"
+                            data-tab="headers">Headers</a>
+                      </li>
+                      <li class="slds-tabs_default__item" role="presentation">
+                        <a class="slds-tabs_default__link" role="tab"
+                            tabindex="-1" aria-selected="false"
+                            aria-controls="tab-body" id="tab-body-link"
+                            data-tab="body">Body</a>
+                      </li>
+                    </ul>
+
+                    <!-- Tab: Request -->
+                    <div id="tab-request" class="slds-tabs_default__content slds-show" role="tabpanel" aria-labelledby="tab-request-link">
+                      
+                      <!-- Relative Path -->
+                      <div class="section slds-m-bottom_small">
+                        <lightning-combobox
+                          label="Relative Path"
+                          variant="label-hidden"
+                          placeholder="Select relative path"
+                          value={selectedRelativePath}
+                          options={relativePaths}
+                          onchange={handleRelativePathChange}
+                          class="dark-input full-width"
+                        ></lightning-combobox>
+                      </div>
+
+                      <!-- URL Bar -->
+                      <div class="url-bar slds-m-bottom_small">
+                        <lightning-combobox
+                          value={method}
+                          options={methodOptions}
+                          onchange={handleMethodChange}
+                          variant="label-hidden"
+                          class="method-select dark-input"
+                        ></lightning-combobox>
+
+                        <input
+                          type="text"
+                          class="url-input dark-input"
+                          placeholder="Enter request URL..."
+                          value={url}
+                          onchange={handleUrlChange}
+                          onkeydown={handleKeyDown}
+                        />
+
+                        <lightning-button
+                          variant="brand"
+                          label="Send"
+                          onclick={sendRequest}
+                          disabled={loading}
+                        ></lightning-button>
+                      </div>
+
+                    </div>
+
+                    <!-- Tab: Headers -->
+                    <div id="tab-headers" class="slds-tabs_default__content slds-hide" role="tabpanel" aria-labelledby="tab-headers-link">
+                      
+                      <!-- Headers -->
+                      <div class="section slds-m-bottom_small">
+                        <div class="section-header slds-m-bottom_small">
+                          <h3 class="section-title">Headers</h3>
+                          <lightning-button-icon
+                            icon-name="utility:add"
+                            onclick={addHeader}
+                            size="small"
+                          ></lightning-button-icon>
+                        </div>
+
+                        <div class="headers-list">
+                          <template for:each={headers} for:item="header">
+                            <div key={header.id} class="header-row">
+                              <input
+                                class="header-input dark-input"
+                                placeholder="Key"
+                                value={header.key}
+                                data-id={header.id}
+                                onchange={handleHeaderKeyChange}
+                              />
+                              <input
+                                class="header-input dark-input"
+                                placeholder="Value"
+                                value={header.value}
+                                data-id={header.id}
+                                onchange={handleHeaderValueChange}
+                              />
+                              <lightning-button-icon
+                                icon-name="utility:delete"
+                                data-id={header.id}
+                                onclick={removeHeader}
+                                variant="bare"
+                              ></lightning-button-icon>
+                            </div>
+                          </template>
+                        </div>
+                      </div>
+
+                    </div>
+
+                    <!-- Tab: Body -->
+                    <div id="tab-body" class="slds-tabs_default__content slds-hide" role="tabpanel" aria-labelledby="tab-body-link">
+                      
+                      <!-- Body -->
+                      <template if:true={showBody}>
+                        <div class="section body-section">
+                          <h3 class="section-title">Body</h3>
+                          <textarea
+                            class="body-textarea dark-input textarea-15 full-width"
+                            placeholder="Enter JSON body..."
+                            value={requestHeaders}
+                            onchange={handleBodyChange}
+                            onkeydown={handleKeyDown}
+                          ></textarea>
+                        </div>
+                      </template>
+
+                    </div>
+
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+            <!-- Response Panel -->
+            <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+              <div class="panel response-panel">
+                <div class="panel-header">
+                  <h2 class="panel-title">Response</h2>
+                </div>
+                <div class="panel-content">
+                  <template if:true={loading}>
+                    <div class="empty-state">
+                      <lightning-spinner size="medium"></lightning-spinner>
+                      <p class="empty-text">Sending request...</p>
+                    </div>
+                  </template>
+
+                  <template if:true={error}>
+                    <div class="error-state">
+                      <p class="error-title">Request Failed</p>
+                      <p class="error-message">{error}</p>
+                    </div>
+                  </template>
+
+                  <template if:true={hasResponse}>
+                    <div class="response-content">
+                      <div class="response-header slds-m-bottom_small">
+                        <div class="response-meta">
+                          <span class={statusClass}>
+                            {response.status} {response.statusText}
+                          </span>
+                          <span class="response-time">
+                            {response.time} ms
+                          </span>
+                        </div>
+                        <lightning-button-icon
+                          icon-name={copyIcon}
+                          onclick={copyResponse}
+                          variant="bare"
+                        ></lightning-button-icon>
+                      </div>
+
+                      <pre class="response-body">{formattedResponse}</pre>
+                    </div>
+                  </template>
+
+                </div>
+              </div>
+            </div>
+
+          </div> <!-- end panels -->
+
+        </div>
+      </lightning-card>
+    </div>
+
+  </div>
+</template>

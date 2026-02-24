@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Response_Handling_Mode__c</fullName>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <label>Response Handling Mode</label>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>NONE</fullName>
+                <default>true</default>
+                <label>NONE</label>
+            </value>
+            <value>
+                <fullName>MAP_TO_FIELDS</fullName>
+                <default>false</default>
+                <label>MAP_TO_FIELDS</label>
+            </value>
+            <value>
+                <fullName>CUSTOM_APEX</fullName>
+                <default>false</default>
+                <label>CUSTOM_APEX</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
