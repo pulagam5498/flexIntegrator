@@ -20,7 +20,7 @@
  * Last Updated: 
  */
 global inherited sharing class FIR_IntegrationService {
-
+public static boolean skipConfigActiveCheck = FALSE;
     
  /**
  * Retrieves Flex_Integrator_Configuration__mdt records based on optional filters.
@@ -111,7 +111,7 @@ global inherited sharing class FIR_IntegrationService {
             if(!opList.isEmpty()){
                 config = opList[0];
             }            
-            if (opList == null || opList.isEmpty() || !config.Is_Active__c) {
+            if (opList == null || opList.isEmpty() || (!skipConfigActiveCheck && !config.Is_Active__c)) {
                 returnResult.success = FIR_CONSTANTS.BOOLEAN_FALSE;
                 returnResult.errorMessage = FIR_CONSTANTS.ERR_CONFIG_NOT_FOUND_INACTIVE + ctx.operationDeveloperName;
                 return returnResult;
