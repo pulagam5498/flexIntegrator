@@ -51,9 +51,9 @@
    /* Base button styles */
    .btn-default {
      display: inline-block;
-     padding: 10px 24px;
+     padding: 1px 10px;
      font-family: sans-serif;
-     font-size: 18px;
+     font-size: 10px;
      font-weight: bold;
      text-align: center;
      text-decoration: none;
@@ -61,7 +61,7 @@
      border: 2px solid;  /* Outline thickness */
      background-color: #ffffff; /* White background */
      cursor: pointer;
-     margin: 10px;
+     margin: 0px;
    }
    
    /* Red Variant - Often used for errors/destructive actions */

@@ -76,7 +76,7 @@
                                                    <span class="btn-default btn-green">Active</span>
                                                 </template>
                                                 <template lwc:else>
-                                                     <span class="fi-badge fi-activation_inactive">Inactive</span>
+                                                     <span class="btn-default btn-red">Inactive</span>
                                                 </template>
                                                 
                                                 
@@ -106,14 +106,24 @@
                                             </div>
                                             <div class="fi-card-icons slds-col slds-shrink">
                                                 <lightning-button-icon
-                                                    icon-name="utility:connected_apps"
+                                                    icon-name="utility:play"
                                                     variant="border-filled"
                                                     size="small"
                                                     alternative-text="Test connection"
                                                     title="Test"
                                                     data-id={cfg.Id}
                                                     onclick={handleTest}>
-                                                </lightning-button-icon>
+                                                </lightning-button-icon> 
+
+                                                <!-- <lightning-button-icon
+                                                    icon-name="utility:play"
+                                                    variant="border-filled"
+                                                    alternative-text="Test"
+                                                    title="Test"
+                                                    data-devname={cfg.DeveloperName}
+                                                    onclick={handleTestClick}>
+                                                </lightning-button-icon> -->
+                                                
                                                 <lightning-button-icon
                                                     icon-name="utility:copy_to_clipboard"
                                                     variant="border-filled"
@@ -180,35 +190,9 @@
                                 </span>
                             </div>
                         </template>
-                        <div class="slds-col slds-shrink">
-                            <lightning-button-icon
-                                icon-name="utility:copy_to_clipboard"
-                                variant="border-filled"
-                                alternative-text="Duplicate this configuration"
-                                title="Duplicate (D)"
-                                onclick={handleDuplicateActive}>
-                            </lightning-button-icon>
-                        </div>
-                        <div class="slds-col slds-shrink">
-                            <lightning-button-icon
-                                icon-name="utility:save"
-                                variant="brand"
-                                alternative-text="Save"
-                                title="Save"
-                                onclick={handleSave}
-                                disabled={isSaveDisabled}>
-                            </lightning-button-icon>
-                        </div>
-                        <div class="slds-col slds-shrink">
-                            <lightning-button-icon
-                                icon-name="utility:connected_apps"
-                                variant="border-filled"
-                                alternative-text="Test Connection"
-                                title="Test Connection"
-                                onclick={handleTestConnection}
-                                disabled={isTesting}>
-                            </lightning-button-icon>
-                        </div>
+                        <lightning-button label="Clone" title="Clone Configuration" onclick={handleDuplicateActive} ></lightning-button>
+                        <lightning-button variant="brand-outline"  label="Test Connection" title="Test Connection" disabled={isTesting} onclick={handleTestConnection} class="slds-m-left_xx-small"></lightning-button>
+                        <lightning-button variant="brand" label="Save" title="Save Configuration" onclick={handleSave} class="slds-m-left_xx-small" disabled={isSaveDisabled}></lightning-button>
                         <div class="slds-col slds-shrink">
                             <lightning-button-icon
                                 icon-name="utility:close"

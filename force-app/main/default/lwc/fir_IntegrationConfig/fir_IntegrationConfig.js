@@ -222,6 +222,29 @@ export default class Fir_IntegrationConfig extends NavigationMixin(LightningElem
         }
     }
 
+
+/*
+ handleTestClick(event) {
+    event.stopPropagation();
+    const devName = event.currentTarget.dataset.devname;
+    this._navigateToTestConsole(devName);
+}
+
+
+_navigateToTestConsole(developerName) {
+    this[NavigationMixin.Navigate]({
+        type: 'standard__navItemPage',
+        attributes: {
+            apiName: 'fir_test_console'
+        },
+        state: {
+            c__developerName: developerName,
+            c__mode: 'test',
+            c__ts: Date.now()
+        }
+    });
+} */
+
     // ── Duplicate ─────────────────────────────────────────────────────────────
     handleDuplicate(event) {
         event.stopPropagation();
